@@ -1,0 +1,33 @@
+<html>
+<head>
+    <style>
+        /* Style the canvas element */
+        canvas {
+            border: 1px solid black;
+
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            width: 800px;
+  
+        }
+        /* Style the buttons */
+        button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Create a canvas element to draw the galton board -->
+    <canvas id="canvas" width="600" height="600"></canvas>
+    <!-- Create buttons to start and stop the simulation -->
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <!-- Load the script that contains the logic of the simulation -->
+    <script src="script.js"></script>
+</body>
+</html>
