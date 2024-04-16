@@ -3,7 +3,7 @@ var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
 // Define some constants for the simulation
-var rows = 50; // Number of rows of pegs
+var rows = 10;//Number of rows of pegs
 var cols = 2; // Number of columns of pegs
 var gap = 250/rows; // Gap between pegs // standard value = 50 / update: dynamic size based on rows
 var radius = 50/rows; // Radius of pegs and balls //standard value = 10  // same
@@ -31,9 +31,32 @@ function drawPegs() {
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
+            if (i == rows - 1)
+            {
+                drawVerticalLine(x, y);
+            }
         }
         cols += 1; // increasing the column content incrementally
     }
+    drawHorizontalLine(x, y); //Übergabe der letzten Peg's Position
+}
+
+function drawHorizontalLine(x, y) {
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo((canvas.width-gap) / 2 + gap * (-(rows-1)/ 2), y * 2.25);
+    ctx.lineTo(x, y * 2.25);
+    ctx.stroke();
+
+}
+
+function drawVerticalLine(x, y)
+{
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y + radius );
+    ctx.lineTo(x, y * 2.25);
+    ctx.stroke();
 }
 
 function drawball(x_position = canvas.width / 2, y_position = gap) {
