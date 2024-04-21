@@ -1,8 +1,13 @@
 // Get the canvas element and its context
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
+canvas.width = window.innerHeight * 0.3; //ca. 500px
+canvas.height = window.innerHeight*0.4;
+console.log(window.innerWidth);
 
 // Define some constants for the simulation
+var stop = false; //stop execution
+var active = false; //animation is not active 
 var rows = 10;//Number of rows of pegs
 var cols = 2; // Number of columns of pegs
 var gap = 250/rows; // Gap between pegs // standard value = 50 / update: dynamic size based on rows
@@ -38,11 +43,11 @@ function drawPegs() {
         }
         cols += 1; // increasing the column content incrementally
     }
-    drawHorizontalLine(x, y); //Übergabe der letzten Peg's Position
+    drawHorizontalLine(x, y); //ï¿½bergabe der letzten Peg's Position
 }
 
 function drawHorizontalLine(x, y) {
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo((canvas.width-gap) / 2 + gap * (-(rows-1)/ 2), y * 2.25);
     ctx.lineTo(x, y * 2.25);
@@ -50,8 +55,11 @@ function drawHorizontalLine(x, y) {
 
 }
 
+var coordinates = []; //deepest level pegs coordinates
+
 function drawVerticalLine(x, y)
 {
+    coordinates.push(x);
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x, y + radius );
@@ -67,97 +75,106 @@ function drawball(x_position = canvas.width / 2, y_position = gap) {
 
 }
 
-function ballProbabilityMotion() {
+function wait(ms) 
+{
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+async function ballProbabilityMotion(speed = 150, n = 5) {  //muss n mal durchlaufen
+    if (n==0) {active= false; return;}
+    const intial_n = n;
     var j = 0; // Platz zwischen pegs //standard Value: 0, also Mitte 
-    var i = 1; //j gerade falls i ungerade und umgekehrt //Höhenebene
+    var i = 1; //j gerade falls i ungerade und umgekehrt //HÃ¶henebene
     var xPos = canvas.width / 2 - 0.5 * gap * j;
     var yPos = gap * i;
     var arr = [];
     while (i <= rows+1)
     {
+        if (!stop)
+        {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawball(xPos, yPos);
+            draw();
+            await wait(speed);
+            cols = 2;
+            
+            if(i==rows) //the last level? 
+            {
+                for (let v = 0; v < coordinates.length+1; v++)
+                {
+                    if (v<coordinates.length && coordinates[v]< xPos && coordinates[v+1] >= xPos)
+                    {
+                        //var StatLenght = (y * 2.25 - (y+radius))/ intial_n;
+                        //TODO : use statLength to draw the how often a ball fits 
+                        //between nth pegs. Implement and call drawStats() from here
+                    }  
+                }
+            }
+            
 
-        drawball(xPos, yPos);
-        var xPos = canvas.width / 2 - 0.5 * gap * j;
-        var yPos = gap * i;
-        var random = Math.random(); //Muss angepasst wegen Variationsmöglichkeit 3
-        arr.push(random);           // Dazu muss die 0,5 in If-statement angepasst 
-        if (random <= 0.5) {
-            j += 1; //going right 
+            /*setTimeout(() => {
+                requestAnimationFrame(ballProbabilityMotion);
+            }, 1000 / 60); // Adjust the delay to change the frame rate*/
+
+            var xPos = canvas.width / 2 - 0.5 * gap * j;
+            var yPos = gap * i;
+            var random = Math.random(); //Muss angepasst wegen Variationsmï¿½glichkeit 3
+            arr.push(random);           // Dazu muss die 0,5 in If-statement angepasst 
+            if (random <= 0.5) {
+                j += 1; //going right 
+            }
+            else j -= 1; //going left
+
+
+            i += 1;  //go to the next level(downwards)
         }
-        else j -= 1; //going left
-
-        i += 1;  //go to the next level(downwards)
-
+        else 
+        {
+            stop = false;
+            active = false;
+            return;
+        }
     }
     console.log(arr);
+    ballProbabilityMotion(speed, n-1);
 }
 
-// Draw the balls on the canvas
-/*function drawBalls() { //unfunctional!!
-    // Loop through the balls array
-    for (var i = 0; i < balls.length; i++) {
-        // Get the current ball
-        var b = balls[i];
-        // Update the position of the ball
-        b.x += b.vx;
-        b.y += b.vy;
-        // Check if the ball hits a peg
-        var row = Math.floor(b.y / gap);
-        var col = Math.floor((b.x - (canvas.width - gap * (rows - 1)) / 2) / gap + row / 2);
-        if (row >= 0 && row < rows && col >= 0 && col < cols) {
-            // Calculate the distance between the ball and the peg
-            var dx = b.x - ((canvas.width - gap * (rows - 1)) / 2 + gap * (col - row / 2));
-            var dy = b.y - (gap * (row + 1));
-            var d = Math.sqrt(dx * dx + dy * dy);
-            // If the distance is less than the sum of the radii, bounce the ball
-            if (d < radius * 2) {
-                // Choose a random direction to bounce
-                var dir = Math.random() < 0.5 ? -1 : 1;
-                // Set the velocity of the ball
-                b.vx = dir * speed;
-                b.vy = speed;
-            }
-        }
-        // Check if the ball reaches the bottom
-        if (b.y > canvas.height - radius) {
-            // Increment the bin count
-            bins[col]++;
-            // Remove the ball from the array
-            balls.splice(i, 1);
-            i--;
-        } else {
-            // Draw a circle with the ball color
-            ctx.fillStyle = "red";
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
+function drawStats(x, y, length)
+{
+    //TODO
+}
+
+
+
+
+/*async function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    draw();
+    await wait(200);
+    cols = 2;
+    ballProbabilityMotion(); // to be modified for controlling the speed
+    
+
+
+    
+    // Request the next frame after a specific delay (e.g., 1000ms / 60fps = ~16.67ms)
+    setTimeout(() => {
+      requestAnimationFrame(animate);
+    }, 1000 / 60); // Adjust the delay to change the frame rate
 }*/
 
-// Draw the bins on the canvas
-/*function drawBins() {    //unfunctional!!
-    // Loop through the bins array
-    for (var i = 0; i < bins.length; i++) {
-        // Calculate the x and y coordinates of the bin
-        var x = (canvas.width - gap * (rows - 1)) / 2 + gap * (i - rows / 2);
-        var y = canvas.height - radius - bins[i] * radius * 2;
-        // Draw a vertical line to represent the bin
-        ctx.beginPath();
-        ctx.moveTo(x, canvas.height - radius);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-    }
-}*/
+
 
 // Draw the galton board on the canvas
 function draw() {
     // Clear the canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //ctx.clearRect(0, 0, canvas.width, canvas.height);
     // Draw the pegs, balls and bins
     drawPegs();
+
     //drawball(canvas.width / 2 - 0.5 * gap * 0, gap * 5);
-    ballProbabilityMotion();
+    //ballProbabilityMotion();
     //drawBalls();
     //drawBins();
 }
@@ -177,19 +194,31 @@ function start() {
     timer = setTimeout(start, interval);
 }
 
-// Stop the simulation
-function stop() {
-    // Clear the timer
-    clearTimeout(timer);
-}
+
 
 // Get the start and stop buttons
 var startButton = document.getElementById("start");
 var stopButton = document.getElementById("stop");
 
 // Add event listeners to the buttons
-startButton.addEventListener("click", start);
-stopButton.addEventListener("click", stop);
+startButton.addEventListener("click", () => {
+
+    if (!active) //assert the function runs only once at a time
+    {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        cols= 2;
+        active = true;
+        ballProbabilityMotion();
+    }
+
+});
+stopButton.addEventListener("click", () => {
+    if (active)
+    stop = true;
+});
 
 // Draw the galton board for the first time
-draw();
+
+//Initialization
+drawPegs();
+//draw();
