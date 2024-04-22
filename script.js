@@ -9,13 +9,11 @@ console.log(window.innerWidth);
 var stop = false; //stop execution
 var active = false; //animation is not active 
 var rows = 10;//Number of rows of pegs
-var cols = 2; // Number of columns of pegs
+var cols = 2; // Number of columns of pegs it is a constant
 var gap = 250/rows; // Gap between pegs // standard value = 50 / update: dynamic size based on rows
 var radius = 50/rows; // Radius of pegs and balls //standard value = 10  // same
-var speed = 5; // Speed of balls
 var interval = 100; // Interval between balls
 var bins = []; // Array to store the number of balls in each bin
-var balls = []; // Array to store the balls in motion
 var timer = null; // Variable to store the timer
 
 // Initialize the bins array with zeros
@@ -36,6 +34,7 @@ function drawPegs() {
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
+           // console.log("i is "+ i);   
             if (i == rows - 1)
             {
                 drawVerticalLine(x, y);
@@ -67,6 +66,7 @@ function drawVerticalLine(x, y)
     ctx.stroke();
 }
 
+
 function drawball(x_position = canvas.width / 2, y_position = gap) {
     ctx.fillStyle = "red";
     ctx.beginPath();
@@ -81,41 +81,36 @@ function wait(ms)
 }
 
 
-async function ballProbabilityMotion(speed = 150, n = 5) {  //muss n mal durchlaufen
-    if (n==0) {active= false; return;}
-    const intial_n = n;
+async function ballProbabilityMotion(speed = 100, n = 20, initial_n = 20) {  //muss n mal durchlaufen
+    if (n==0) {active= false; statsWatcher ={}; return;}
     var j = 0; // Platz zwischen pegs //standard Value: 0, also Mitte 
     var i = 1; //j gerade falls i ungerade und umgekehrt //Höhenebene
     var xPos = canvas.width / 2 - 0.5 * gap * j;
     var yPos = gap * i;
     var arr = [];
+    var y = gap * rows;
     while (i <= rows+1)
     {
         if (!stop)
         {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, y +radius); //clear the upper half only
             drawball(xPos, yPos);
-            draw();
+            drawPegs();
             await wait(speed);
             cols = 2;
-            
-            if(i==rows) //the last level? 
-            {
-                for (let v = 0; v < coordinates.length+1; v++)
-                {
-                    if (v<coordinates.length && coordinates[v]< xPos && coordinates[v+1] >= xPos)
-                    {
-                        //var StatLenght = (y * 2.25 - (y+radius))/ intial_n;
-                        //TODO : use statLength to draw the how often a ball fits 
-                        //between nth pegs. Implement and call drawStats() from here
-                    }  
-                }
-            }
-            
 
-            /*setTimeout(() => {
-                requestAnimationFrame(ballProbabilityMotion);
-            }, 1000 / 60); // Adjust the delay to change the frame rate*/
+            if(i==rows+1) //the last level? 
+            {
+                console.log("i is" + i);
+
+                //TODO : use statLength to draw the how often a ball fits 
+               //between nth pegs. Implement and call drawStats() from here
+                drawStats(xPos, y , initial_n);  
+                drawStatsCount(xPos, y);     
+                //await wait(300);    
+            }
+  
+
 
             var xPos = canvas.width / 2 - 0.5 * gap * j;
             var yPos = gap * i;
@@ -140,59 +135,54 @@ async function ballProbabilityMotion(speed = 150, n = 5) {  //muss n mal durchla
     ballProbabilityMotion(speed, n-1);
 }
 
-function drawStats(x, y, length)
+var statsWatcher = {}; // contains the x postion of the buckets as keys and 
+// an array of corresponding length and how often the ball entered the bucket
+// as a second value x:[corresponding length, count]
+
+function drawStats(x, y, n)
 {
-    //TODO
-}
+    console.log("drawSTATS() entered!");
+    ctx.lineWidth = gap-2;
+    let = startingPoint = y * 2.25;
+    var length = (y + radius)/ n; 
+    ctx.beginPath();
 
-
-
-
-/*async function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    draw();
-    await wait(200);
-    cols = 2;
-    ballProbabilityMotion(); // to be modified for controlling the speed
+    const gradient = ctx.createLinearGradient(0,0,canvas.width, 0);
+    gradient.addColorStop("0", "magenta");
+    gradient.addColorStop("1.0", "red");
+    gradient.addColorStop("1.0", "red");
+    ctx.strokeStyle = gradient// "red";
     
-
-
-    
-    // Request the next frame after a specific delay (e.g., 1000ms / 60fps = ~16.67ms)
-    setTimeout(() => {
-      requestAnimationFrame(animate);
-    }, 1000 / 60); // Adjust the delay to change the frame rate
-}*/
-
-
-
-// Draw the galton board on the canvas
-function draw() {
-    // Clear the canvas
-    //ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Draw the pegs, balls and bins
-    drawPegs();
-
-    //drawball(canvas.width / 2 - 0.5 * gap * 0, gap * 5);
-    //ballProbabilityMotion();
-    //drawBalls();
-    //drawBins();
+    if (!statsWatcher.hasOwnProperty(x))
+    {
+        statsWatcher[x] = [length, 1];
+        ctx.moveTo(x, startingPoint);
+        console.log("n is " +n );
+        ctx.lineTo(x, startingPoint - length );       
+    }
+    else
+    {
+        ctx.moveTo(x,startingPoint - statsWatcher[x][0]);
+        statsWatcher[x][0]+=length+10;
+        statsWatcher[x][1]+=1;
+        console.log("statswateher has " + statsWatcher[x][1]);
+        console.log("n is " +n );
+        ctx.lineTo(x, startingPoint - statsWatcher[x][0]);
+    }
+    ctx.stroke(); 
+    ctx.strokeStyle = "black";
 }
 
-// Start the simulation
-function start() {
-    // Create a new ball at the top center of the canvas
-    var b = {
-        x: canvas.width / 2,
-        y: radius,
-        vx: 0,
-        vy: speed
-    };
-    // Add the ball to the array
-    balls.push(b);
-    // Set the timer to create more balls
-    timer = setTimeout(start, interval);
+function drawStatsCount(x, y)
+{
+    y = y * 2.35;
+    let fontSize = gap*0.66;
+    ctx.font = fontSize + "px Arial"; // TODO: muss dynamisch sein
+    ctx.fillStyle = "red";
+    ctx.clearRect(x-gap/2, y-gap/2, gap, gap*1.5);
+    ctx.fillText(statsWatcher[x][1], x-gap/6, y);
 }
+
 
 
 
@@ -215,10 +205,10 @@ startButton.addEventListener("click", () => {
 stopButton.addEventListener("click", () => {
     if (active)
     stop = true;
+    statsWatcher = {};
 });
 
-// Draw the galton board for the first time
 
+// Draw the galton board for the first time
 //Initialization
 drawPegs();
-//draw();
