@@ -8,13 +8,30 @@ console.log(window.innerWidth);
 // Define some constants for the simulation
 var stop = false; //stop execution
 var active = false; //animation is not active 
-var rows = 10;//Number of rows of pegs
+var rows = 5;//Number of rows of pegs
 var cols = 2; // Number of columns of pegs it is a constant
-var gap = 250/rows; // Gap between pegs // standard value = 50 / update: dynamic size based on rows
-var radius = 50/rows; // Radius of pegs and balls //standard value = 10  // same
-var interval = 100; // Interval between balls
+var gap = 250/rows; // Gap between pegs // standard value = 250/rows / update: dynamic size based on rows
+var radius = 50/rows; // Radius of pegs and balls //standard value = 50/rows  // same
 var bins = []; // Array to store the number of balls in each bin
-var timer = null; // Variable to store the timer
+var timer = null;// Variable to store the timer
+var speed = 300; //canot be reseted unsing resetValues()
+
+function resetValues()
+{
+    stop = false; //stop execution
+    active = false; //animation is not active 
+    cols = 2; // Number of columns of pegs it is a constant
+    gap = 250/rows; // Gap between pegs // standard value = 250/rows / update: dynamic size based on rows
+    radius = 50/rows; // Radius of pegs and balls //standard value = 50/rows  // same
+    bins = []; // Array to store the number of balls in each bin
+    timer = null;
+
+    for (var i = 0; i < cols; i++) {
+        bins[i] = 0;
+    }
+
+    statsWatcher = {};
+}
 
 // Initialize the bins array with zeros
 for (var i = 0; i < cols; i++) {
@@ -80,9 +97,9 @@ function wait(ms)
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
-async function ballProbabilityMotion(speed = 100, n = 20, initial_n = 20) {  //muss n mal durchlaufen
-    if (n==0) {active= false; statsWatcher ={}; return;}
+// n / initial_n ratio is 2/7 optimally!
+async function ballProbabilityMotion(n = 100, initial_n = 100) {  //muss n mal durchlaufen
+    if (n<0) {active= false; statsWatcher ={}; return;}
     var j = 0; // Platz zwischen pegs //standard Value: 0, also Mitte 
     var i = 1; //j gerade falls i ungerade und umgekehrt //Höhenebene
     var xPos = canvas.width / 2 - 0.5 * gap * j;
@@ -98,16 +115,17 @@ async function ballProbabilityMotion(speed = 100, n = 20, initial_n = 20) {  //m
             drawPegs();
             await wait(speed);
             cols = 2;
-
-            if(i==rows+1) //the last level? 
+            console.log("i is " + i + " but row is " + Number(Number(rows)+1));
+            if(i==Number(Number(rows)+1)) //the last level? 
             {
-                console.log("i is" + i);
+                
 
-                //TODO : use statLength to draw the how often a ball fits 
-               //between nth pegs. Implement and call drawStats() from here
+                //use statLength to draw the how often a ball fits 
+                //between nth pegs. Implement and call drawStats() from here
                 drawStats(xPos, y , initial_n);  
                 drawStatsCount(xPos, y);     
-                //await wait(300);    
+                //await wait(300);   
+                break;
             }
   
 
@@ -123,16 +141,19 @@ async function ballProbabilityMotion(speed = 100, n = 20, initial_n = 20) {  //m
 
 
             i += 1;  //go to the next level(downwards)
+            //console.log("i is " + i);
         }
         else 
         {
             stop = false;
             active = false;
+            statsWatcher= {};
             return;
         }
+        //console.log("row nr. " + rows);
     }
-    console.log(arr);
-    ballProbabilityMotion(speed, n-1);
+    console.log("recursion round!");
+    ballProbabilityMotion(n-1);
 }
 
 var statsWatcher = {}; // contains the x postion of the buckets as keys and 
@@ -147,10 +168,12 @@ function drawStats(x, y, n)
     var length = (y + radius)/ n; 
     ctx.beginPath();
 
+
     const gradient = ctx.createLinearGradient(0,0,canvas.width, 0);
     gradient.addColorStop("0", "magenta");
     gradient.addColorStop("1.0", "red");
     gradient.addColorStop("1.0", "red");
+
     ctx.strokeStyle = gradient// "red";
     
     if (!statsWatcher.hasOwnProperty(x))
@@ -158,12 +181,12 @@ function drawStats(x, y, n)
         statsWatcher[x] = [length, 1];
         ctx.moveTo(x, startingPoint);
         console.log("n is " +n );
-        ctx.lineTo(x, startingPoint - length );       
+        ctx.lineTo(x, startingPoint - length);       
     }
     else
     {
         ctx.moveTo(x,startingPoint - statsWatcher[x][0]);
-        statsWatcher[x][0]+=length+10;
+        statsWatcher[x][0]+=length;
         statsWatcher[x][1]+=1;
         console.log("statswateher has " + statsWatcher[x][1]);
         console.log("n is " +n );
@@ -175,12 +198,14 @@ function drawStats(x, y, n)
 
 function drawStatsCount(x, y)
 {
-    y = y * 2.35;
+    y = y * 2.25 +gap/2;
     let fontSize = gap*0.66;
-    ctx.font = fontSize + "px Arial"; // TODO: muss dynamisch sein
+    ctx.font ="bold " +fontSize + "px Arial"; //
     ctx.fillStyle = "red";
     ctx.clearRect(x-gap/2, y-gap/2, gap, gap*1.5);
-    ctx.fillText(statsWatcher[x][1], x-gap/6, y);
+    if (statsWatcher[x][1]<10)
+    ctx.fillText(statsWatcher[x][1], x-gap/6, y+gap/6);
+    else ctx.fillText(statsWatcher[x][1], x-gap/3, y);
 }
 
 
@@ -189,6 +214,39 @@ function drawStatsCount(x, y)
 // Get the start and stop buttons
 var startButton = document.getElementById("start");
 var stopButton = document.getElementById("stop");
+var rangeInput = document.getElementById("rangeInput"); //rows adjustment control
+var rangeValue = document.getElementById("rangeValue"); //current rows display
+var confirmButton = document.getElementById("confirm");
+var speedRangeInput = document.getElementById("rangeInput2"); //speed adjustment control
+var speedRangeValue = document.getElementById("rangeValue2"); //current speed display
+
+
+var newRowValue = rows; // temp save of the rows
+rangeValue.textContent = "Anzahl Reihen = " + rangeInput.value;
+
+
+speedRangeInput.addEventListener("input", () => {
+    speed = 300 - speedRangeInput.value ;
+    speedRangeValue.textContent = "Fallgeschwindigkeit = " + Math.floor((speedRangeInput.value*100)/300) + "%";
+});
+
+rangeInput.addEventListener("input", () => {
+    rangeValue.textContent = "Anzahl Reihen = " + rangeInput.value;
+    newRowValue = rangeInput.value;
+});
+
+
+confirmButton.addEventListener("click", () => {
+    if (!active)
+    {
+        rows = newRowValue;
+        rangeValue.textContent = "Anzahl Reihen = " + rows;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        resetValues();
+        drawPegs();
+    }
+});
+
 
 // Add event listeners to the buttons
 startButton.addEventListener("click", () => {
@@ -198,14 +256,17 @@ startButton.addEventListener("click", () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         cols= 2;
         active = true;
-        ballProbabilityMotion();
+        ballProbabilityMotion(); 
     }
 
 });
-stopButton.addEventListener("click", () => {
+stopButton.addEventListener("click", async () => {
     if (active)
-    stop = true;
-    statsWatcher = {};
+    {
+        stop = true;
+        await wait(200);
+        statsWatcher = {};
+    }
 });
 
 

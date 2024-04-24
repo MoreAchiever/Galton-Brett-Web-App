@@ -10,18 +10,34 @@
             margin-left: auto;
             margin-right: auto;
             display: block;
-            width: 800px;
+            width: 1000px;
   
         }
+
         /* Style the buttons */
         button {
-            margin-left: 10%;
-            padding: 10px;
+            margin: 1%;
+            border-radius: 12px;
             font-size: 50px;
             align-content: center;
             text-align: center;
-            background-color: #04AA6D; /* Green */
+            background-color: greenyellow; /* Green */
         }
+        .rangeField {
+            align-content: center;
+            text-align: center;
+            font-size: 30px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        input[type="range"] {
+        width: 75%;
+        }
+
     </style>
 </head>
 <body>
@@ -29,8 +45,26 @@
     <!-- <canvas id="canvas" width="600" height="100"></canvas> -->
     <canvas id="canvas"></canvas>
     <!-- Create buttons to start and stop the simulation -->
-    <button style="margin-left: 35%;" class="button button1" id="start">Start</button>
-    <button id="stop">Stop</button>
+    <div class="button-container">
+        <button id="start">Start</button>
+        <button id="stop">Stop</button>
+        <div class="rangeField">
+            <p id="rangeValue">Anzahl Reihen: 10</p>
+            <input style="margin-bottom: 10%;" type="range" id="rangeInput" min="1" max="24" value="5" step="1">
+            <button id="confirm">Bestätigen</button>
+        </div>
+    </div>
+
+
+    <div class = "button-container">
+
+        <div class ="rangeField">
+            <p id="rangeValue2">Fallgeschwindigkeit = 1%</p>
+            <input type="range" id="rangeInput2" min="1" max="300" value="1" step="1">        
+        </div>
+
+    </div>
+
     <!-- Load the script that contains the logic of the simulation -->
     <script src="script.js"></script>
 </body>
