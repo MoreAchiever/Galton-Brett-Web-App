@@ -219,8 +219,8 @@ var rangeValue = document.getElementById("rangeValue"); //current rows display
 var confirmButton = document.getElementById("confirm");
 var speedRangeInput = document.getElementById("rangeInput2"); //speed adjustment control
 var speedRangeValue = document.getElementById("rangeValue2"); //current speed display
-var ballsAmountRangeInput = document.getElementById("rangeInput3");
-var ballsAmountRangeValue = document.getElementById("rangeValue3");
+var ballsAmountRangeInput = document.getElementById("rangeInput3"); //TODO
+var ballsAmountRangeValue = document.getElementById("rangeValue3"); //TODO
 
 
 var newRowValue = rows; // temp save of the rows
