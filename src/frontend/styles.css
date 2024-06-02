@@ -43,7 +43,7 @@ body, html {
   text-decoration: none;
   outline: none;
   color: #fff;
-  background-color: #4CAF50;
+  background-color: #22c55e;
   border: none;
   border-radius: 25px;
   box-shadow: 0 4px #999;
@@ -90,7 +90,7 @@ input[type=range]::-webkit-slider-thumb {
   appearance: none;
   width: 50px;
   height: 50px;
-  background: #4CAF50;
+  background: #22c55e;
   cursor: pointer;
   border-radius: 0; /* Make it square */
 }
