@@ -10,38 +10,62 @@ var idDisplay2 = document.getElementById('id-display2');
 
 createGroupButton.addEventListener('click', async () => {
     if (groupIdInput.value) {
-        const response = await fetch('/create_groupID', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ group_id: groupIdInput.value })  
-        });
-        const res = await response.json();
-        idDisplay.textContent =  res.message;
+        try {
+            const response = await fetch('/create_groupID/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ group_id: groupIdInput.value })  
+            });
+            const jsonResponse = await response.json();
+            if (response.status === 201) {
+                idDisplay.textContent = jsonResponse.detail;
+                return;
+            } 
+            else if (response.status === 400) {
+                idDisplay.textContent = jsonResponse.detail; 
+            }
+            else {
+                throw new Error(jsonResponse.detail);
+            }
+
+        } catch (error) {
+            console.error(error.message);
+        }
     }
 });
 
 
 withoutGrouptButton.addEventListener('click', async () => {
-    window.location.href = '/main'
+    window.location.href = '/main/'
 });
 
 withGroupButton.addEventListener('click', async () => {
     //check if groupID entered, if it exists on the server + save it as users groupID
     if(groupID.value) {
-        const response = await fetch(`/check_groupID?group_id=${groupID.value}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        try {    
+            const response = await fetch(`/check_groupID/?group_id=${groupID.value}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const jsonResponse = await response.json();
+            if (response.ok) {
+                window.location.href = `/main/?group_id=${encodeURIComponent(groupID.value)}`;
+                return;
+            } 
+            else if (response.status === 404) {
+                idDisplay2.textContent = jsonResponse.detail; 
             }
-        });
-        const res = await response.json();
-        if(res.ok) {
-            window.location.href = `/main?group_id=${encodeURIComponent(groupID.value)}`;
-            return;
+            else {
+                throw new Error(jsonResponse.detail);
+            }
+
+        } catch (error) {
+            console.error(error.message);
         }
-        idDisplay2.textContent =  res.message;
     }
 });
     
