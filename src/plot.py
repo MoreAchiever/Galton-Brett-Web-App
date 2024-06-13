@@ -1,77 +1,102 @@
-# src/plot.py
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 import numpy as np
+from scipy.stats import binom
 import os
 
- 
-plot_counter = 0
 
 
+def theoretical_distribution(rows, balls, probability):
 
-def plot_galton_board(bin_counts, num_balls, prob_left, prob_right):
-    num_bins = len(bin_counts)
-    x_labels = range(num_bins)
-
-    additional_info = f"Probability left = {prob_left}\n Probability right = {prob_right}" \
-        f"\nAnzahl Bälle = {num_balls}"
+    bins = np.arange(rows) #K Versuche
+    probs = [round(round(binom.pmf(k, rows-1, probability) * balls, 1)) for k in bins]
+    return probs
 
 
-    plt.bar(x_labels, bin_counts, width=0.8, edgecolor='black')
-    plt.xticks(x_labels)  # Set x-axis labels to show both even and odd numbers
-    plt.xlabel('Bins')
-    plt.ylabel('Number of Balls')
-    plt.title('Galton Board Simulation')
-
-    plt.text(num_bins - 1, max(bin_counts), additional_info,
-        horizontalalignment='right',
-        verticalalignment='top',
-        bbox=dict(facecolor='white', alpha=0.5))
-
-    #plt.show()
+# Funktion zur Berechnung der Abweichung
+def calculate_deviation(actual, theoretical):
+    absolute_errors = np.abs(np.array(actual) - np.array(theoretical))
+    sum_absolute_errors = np.sum(absolute_errors)
+    mae = sum_absolute_errors / np.sum(actual)
+    return [mae*100, sum_absolute_errors]
 
 
-def generate_plots(group_id ,data):
-    # Fetch data from the database
-    global plot_counter
+# Funktion zur Erstellung des Plots
+def plot_galton_board(rows, balls, probability_left, probability_right, actual_stats, theoretical_stats, deviation, plot_path):
+   
+    deviation_percentage = deviation[0]
+    deviation_sum = deviation[1]
+    x_labels = range(rows)
+
+    additional_info = f" {int(probability_left*100)} %  |  {int(probability_right*100)} % " \
+                      f"\nTotal balls = {balls} \nAbweichung  =  {round(deviation_sum)}\nin %  =  {round(deviation_percentage,4)}"
+    
+    
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+
+    #Plot the actual results
+    ax.bar(x_labels, actual_stats, width=0.4, edgecolor='black', label='Actual', align='center')
+
+
+    # Plot the theoretical distribution as a line plot
+    ax.plot(x_labels, theoretical_stats, color='red', marker='o', linestyle='-', linewidth=2, markersize=5,
+            label='Theoretical')
+
+    ax.set_xticks(x_labels)  # Set x-axis labels to show both even and odd number
+    ax.set_xlabel('Bins')
+    ax.set_ylabel('Number of Balls')
+    ax.set_title('Galton Board Simulation')
+
+    # Add additional information in the top-right corner
+    # plt.text(rows - 1, max(max(actual_stats), max(theoretical_stats)), additional_info,
+    #          horizontalalignment='right',
+    #          verticalalignment='top',
+    #          bbox=dict(facecolor='white', alpha=0.5))
     
 
+     # Add a legend
+    ax.legend(loc='upper left', fontsize=8)
+
+    ax.text(0.95, 0.95, additional_info, transform=ax.transAxes,
+        fontsize=8, verticalalignment='top', horizontalalignment='right',
+        bbox=dict(facecolor='white', alpha=0.5))
+    
+    # Adjust x-axis and y-axis limits for proper spacing
+    ax.set_xlim(-0.5, rows - 0.5)
+    ax.set_ylim(0, max(max(actual_stats), max(theoretical_stats)) * 1.2)
+
+    # Adjust layout to ensure equal margins
+    plt.subplots_adjust(left=0.2, right=0.8, top=0.85, bottom=0.15)
+
+    plt.show()
+    plt.savefig(plot_path, bbox_inches='tight', pad_inches=0.1) #>0.5 = 3 in a row
+    plt.close()
+
+
+
+# Funktion zur Generierung und Benennung der Plots
+def generate_plots(data, user_data_counter):
+    
     plot_dir = "frontend/plots"
     os.makedirs(plot_dir, exist_ok=True)
-    #print(data)
-    plot_paths = []
-
-    # Assuming data is a list of tuples, extract the columns you need
-
-
-    for row in data:
-        plot_counter += 1
-        id = row.id
-        rows = row.rows
-        balls = row.balls
-        probability_left = row.probabilityLeft
-        probability_right = row.probabilityRight#row[5]
-        stats = row.stats
-
-
-        plot_galton_board(stats, balls, probability_left, probability_right)
-
-
-        # Save the plot to the static directory
-        # plot_dir = "frontend/plots"
-        # os.makedirs(plot_dir, exist_ok=True)
-        # plot_path = os.path.join(plot_dir, "plot"+ str(n) +".png")
-        # plt.savefig(plot_path)
-        # plt.close()
-
-        plot_path = os.path.join(plot_dir, f"{group_id}_{id}.png")
-        plt.savefig(plot_path)
-        plt.close()
-
-        plot_paths.append(plot_path)
     
-    #return "plot"+ str(n)+ ".png"
+    # Berechne theoretische Verteilung
+    theoretical_stats = theoretical_distribution(data.rows, data.balls,  data.probabilityRight)
+    
+    # Berechne Abweichung
+    deviation = calculate_deviation(data.stats, theoretical_stats)
+    
+    # Benenne die Datei mit der Abweichung
+    plot_path = os.path.join(plot_dir, f"{data.user_id}_{data.group_id}_{user_data_counter}_{deviation[0]}_{data.rows}.png")
 
-    return plot_paths
 
-# generated_plots = generate_plots()
-# print(generated_plots)
+    # Erstelle Plot
+    plot_galton_board(data.rows, data.balls, data.probabilityLeft, data.probabilityRight, data.stats, theoretical_stats, deviation, plot_path)
+    
+    
+   
+    
+    return plot_path
+

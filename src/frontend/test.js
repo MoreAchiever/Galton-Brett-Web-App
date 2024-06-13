@@ -1,49 +1,142 @@
-const urlParams = new URLSearchParams(window.location.search);
-const group_name = urlParams.get('group_id');
-console.log(group_name);
-
+var plot_paths = [];
+var listed_plot_paths = [];
+ 
 // src/static/js/test.js
 
-document.addEventListener('DOMContentLoaded', async () => {
+// Function to list plots in the plot container
+function sort_plots(plotPaths) {
 
-
-    if (!group_name) {
-        console.error('Group ID not found in query parameters');
-        return;
+   
+    // Funktion zur Extraktion der Abweichung aus dem Dateinamen
+    function extractDeviation(plotPath) {
+        const fileName = plotPath.split('/').pop(); // Extrahiere den Dateinamen
+        const parts = fileName.split('_');
+        const deviationStr = parts[parts.length - 2].replace('.png', ''); // Extrahiere die Abweichung
+        return parseFloat(deviationStr); // Umwandeln in Zahl
     }
 
+    // Sort plotPaths based on deviation in descending order
+    return plotPaths.slice().sort((a, b) => {
+        const deviationA = extractDeviation(a);
+        const deviationB = extractDeviation(b);
+        return deviationA - deviationB  ; // Sort in ascending order
+    });
+
+    
+}
+function list_plots(PlotPaths) {
+
+    const plotContainer = document.getElementById('plot-container');
+    plotContainer.innerHTML = ''; // Clear previous plots
+
+    // Füge sortierte Bilder zum plotContainer hinzu
+    PlotPaths.forEach(plotPath => {
+        const img = document.createElement('img');
+        img.src = plotPath;
+        img.alt = 'Plot Image';
+        plotContainer.appendChild(img);
+    });
+
+    return PlotPaths;
+
+}
+
+// Event listener für den Sortieren-Button
+const sortRadioButtons = document.getElementsByName('sort-option');
+sortRadioButtons.forEach(button => {
+    button.addEventListener('click', () => {
+     
+        // Sortiere Bilder in umgekehrter Reihenfolge
+        list_plots(listed_plot_paths.reverse());
+    });
+});
+
+
+// Event listener für das Filtern nach Anzahl der Reihen
+const filterSelect = document.getElementById('filter-select');
+filterSelect.addEventListener('change', () => {
+    var filteredPlotPaths = []
+    const selectedRows = parseInt(filterSelect.value); // Ausgewählte Anzahl der Reihen
+    plot_paths = sort_plots(plot_paths);
+    document.getElementById('ascending').checked = true;
+
+    if (selectedRows === 0) {
+        filteredPlotPaths = plot_paths;
+    }
+    else {
+    // Filtere Bilder nach der Anzahl der Reihen
+    filteredPlotPaths = plot_paths.filter(plotPath => {
+        const parts = plotPath.split('_');
+        const rows = parseInt(parts.pop().replace('.png', '')); // Extract the number of rows
+        return rows === selectedRows;
+        });
+    }
+
+    // Liste die gefilterten Bilder
+    listed_plot_paths = list_plots(filteredPlotPaths);
+
+});
+
+async function loadGroupPlots() {
     try {
-        const response = await fetch(`/list-plots?group_id=${group_name}`, {
+        const response = await fetch(`/list-group-plots?group_id=${group_id}`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json' 
             }
         });
+        const jsonResponse = await response.json();
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        if (response.ok) {
+
+            plot_paths = sort_plots(jsonResponse.plot_paths);
+            listed_plot_paths = list_plots(plot_paths);
+
+        } else {
+            throw new Error(jsonResponse.detail);
         }
-
-        const data = await response.json();
-        console.log('Fetched data:', data); // Debugging output
-
-        if (!data.plot_paths) {
-            console.error('plot_paths is not defined in response data');
-            return;
-        }
-
-        const plotPaths = data.plot_paths;
-
-        const plotContainer = document.getElementById('plot-container');
-        plotContainer.innerHTML = ''; // Clear previous plots
-
-        plotPaths.forEach(plotPath => {
-            const img = document.createElement('img');
-            img.src = plotPath;
-            img.alt = 'Plot Image';
-            plotContainer.appendChild(img);
-        });
     } catch (error) {
-        console.error('Error fetching plots:', error);
+        console.error(error.message);
     }
-});
+}
+
+
+
+async function loadUserPlots() {
+    try {
+        const response = await fetch(`/list-user-plots?user_id=${user_id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json' 
+            }
+        });
+        const jsonResponse = await response.json();
+
+        if (response.ok) {
+
+            plot_paths = sort_plots(jsonResponse.plot_paths);
+            listed_plot_paths = list_plots(plot_paths);
+
+        } else {
+            throw new Error(jsonResponse.detail);
+        }
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
+//----------------------------------------------------------------init-------------------------------------------------//
+
+const urlParams = new URLSearchParams(window.location.search);
+const group_id = urlParams.get('group_id');
+const user_id = urlParams.get('user_id');
+var title = document.getElementById("title");
+
+if (group_id && user_id) {
+    title.innerHTML = "Gruppen_Ergebnisse";
+    loadGroupPlots();
+} else if (!group_id && user_id) {
+    title.innerHTML = "Meine Ergebnisse";
+    loadUserPlots();
+}
+
