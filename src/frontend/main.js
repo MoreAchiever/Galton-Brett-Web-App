@@ -1,44 +1,5 @@
 
 
-function resizeGalton(r = rows)
-{
-    switch(r)
-    {
-        case 1:
-            galtonSize = 1;
-            break;
-        case 2 :
-            galtonSize = 1.3;
-            break;
-        case 3:
-            galtonSize = 1.5;
-            break;
-        case 4: 
-            galtonSize = 1.65;
-            break;
-        case 5 :
-            galtonSize = 1.73;
-            break;
-        case 6:
-            galtonSize = 1.8;
-            break;
-        case 7: 
-            galtonSize = 1.9;
-            break;
-        case 8: 
-            galtonSize = 1.9;
-            break;
-        case 9: 
-            galtonSize = 1.95;
-            break;
-        case 10: 
-            galtonSize = 2;
-            break;
-    }
-    return;
-}
-
-
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
