@@ -61,11 +61,6 @@ sortRadioButtons.forEach(button => {
 });
 
 
-    
-}
-function list_plots(PlotPaths) {
-
-
 // Event listener für das Filtern nach Anzahl der Reihen
 const filterSelect = document.getElementById('filter-select');
 filterSelect.addEventListener('change', () => {
