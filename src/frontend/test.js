@@ -22,6 +22,7 @@ function sort_plots(plotPaths) {
         return deviationA - deviationB  ; // Sort in ascending order
     });
 
+
     
 }
 
@@ -58,6 +59,11 @@ sortRadioButtons.forEach(button => {
         list_plots(listed_plot_paths.reverse());
     });
 });
+
+
+    
+}
+function list_plots(PlotPaths) {
 
 
 // Event listener für das Filtern nach Anzahl der Reihen
@@ -141,7 +147,9 @@ const user_id = urlParams.get('user_id');
 var title = document.getElementById("title");
 
 if (group_id && user_id) {
+
     title.innerHTML = "Gruppen Ergebnisse";
+
     loadGroupPlots();
 } else if (!group_id && user_id) {
     title.innerHTML = "Meine Ergebnisse";
@@ -161,6 +169,7 @@ downloadButton.addEventListener('click', function() {
         html2canvas:  { scale: 2 },
         jsPDF:        { unit: 'in', format: 'a4' },
         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+
     };
 
     // Generate the PDF

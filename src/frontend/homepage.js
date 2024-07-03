@@ -12,6 +12,7 @@ async function generateUUID() {
         }
     }
 
+
     userId = uuidv4();
     let exists = await createUserId(userId);
     
@@ -70,10 +71,12 @@ async function check_userId(userId) {
         else if (response.status === 404) {
             
             return false;
+
         }
         else {
             throw new Error(jsonResponse.detail);
         }
+
 
     } catch (error) {
         console.error(error.message);
@@ -89,6 +92,7 @@ const userId = await generateUUID();
     
     const getStartedButton = document.getElementById('get-started');
     const skipButton = document.getElementById("skip-button");
+
     const hiddenElements = document.getElementById('hidden-elements');
     const ctaContainer = document.getElementById('cta-container');
     // const navToggle = document.getElementById('nav-toggle');
@@ -110,6 +114,7 @@ const userId = await generateUUID();
     // navToggle.addEventListener('click', function() {
     //     navContent.classList.toggle('hidden');
     // });
+
 
     // Smooth scrolling for navigation links
     document.querySelectorAll('nav a').forEach(anchor => {
@@ -216,6 +221,7 @@ function attachEventListeners() {
             }
         }
     });
+
 }
 
 
@@ -255,3 +261,4 @@ function attachEventListeners() {
 
 // // Ensure the function runs after the DOM is fully loaded
 // generateRandomSymbols();
+
