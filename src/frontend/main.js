@@ -1,5 +1,8 @@
+
+
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
+
 
 var galtonSize = 1.73; // On start with rows = 5
 
@@ -49,8 +52,8 @@ function resizeCanvas() {
     reloadCanvas();
 }
 
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+//window.addEventListener('resize', resizeCanvas);
+
 
 // Extract 'group_id, user_id' from the current URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -59,7 +62,7 @@ const user_id = urlParams.get('user_id');
 if (!group_name) {
     group_name =".";
     // document.getElementById("exportData").style.visibility ="hidden";
-    document.getElementById("exportData").style.display ="none";
+    document.getElementById("GroupExportData").style.display ="none";
 }
 
 
@@ -70,24 +73,28 @@ var stop = false;
 var pause = false;
 var active = false;
 var rows = 5;
-var balls = 250;
+var balls = 500;
 var cols = 2;
 var gap = canvas.height / (rows + 2) /galtonSize;
 var radius = gap / 5;
 var bins = [];
 var timer = null;
-var speed = 1000;
+var speed = 15;
+var horizontalLineWidth = 3;
+var verticalLineWidth = 2;
 var animate;
 var coordinates = [];
 var statsWatcher = {};
+var prog_statsWathcer = {};
+var current_bin = 0;
 var simplifiedStats = [];
-var newRowValue = rows;
-var newBallValue = balls;
+var simplifiedPrognosis = [];
+var remainedBalls = balls;
+var leftBalls = balls;
 var probabilityRight = 50;
 var probabilityLeft = 50;
-var data = {user_id: user_id, group_id: group_name, rows: 0, balls: 0, probabilityLeft: 0, probabilityRight: 0, stats: []};
-console.log(group_name);
-console.log(user_id);
+var data = {user_id: user_id, group_id: group_name, rows: 0, balls: 0, probabilityLeft: 0, probabilityRight: 0, stats: [], prog_stats: []};
+
 
 /*                                                      Animation
 ********************************************************************************************************************************** */
@@ -102,10 +109,11 @@ function generateLastArray(size) {
 }
 
 function filterStats(stats) {
+
     var arr = [];
     console.log(stats);
     var keys = Object.keys(stats).map(Number).sort((a, b) => a - b);
-    console.log("stats= ", keys.length);
+   // console.log("stats= ", keys.length);
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i];
         arr.push(stats[key][1]);
@@ -115,13 +123,31 @@ function filterStats(stats) {
 }
 
 function reloadCanvas(x1 = 0, y1 = 0, x2 = canvas.width, y2 = canvas.height) {
+    ctx.clearRect(x1, y1, x2, y2);
     if (x1 == y1 == 0 & x2 == canvas.width & y2 == canvas.height) {
-        ctx.clearRect(x1, y1, x2, y2);
         resetValues();
         drawPegs();
-    } else ctx.clearRect(x1, y1, x2, y2);
+    }
 }
 
+function resetProg() {  
+
+    simplifiedPrognosis = [];
+    prognosisInputDisplay.innerHTML =  balls;
+    remainedBalls = balls;
+    prog_statsWathcer = {};
+    
+    // Initialize the pro_coordinates array with zeros
+    for (var i = 0; i < coordinates.length-1; i++) {
+        prog_statsWathcer[coordinates[i][0]] = [0,0];
+        drawStatsCount2(coordinates[i][0], coordinates[i][1], prog_statsWathcer);
+    }      
+    const progInputs = document.querySelectorAll("#prognosisInput");    
+    progInputs.forEach((input) => {
+            input.max = remainedBalls ;
+            input.value = 0;         
+        });     
+}
 
 function resetValues() {
     pause = false; //stop execution
@@ -131,6 +157,7 @@ function resetValues() {
     radius = gap / 5; // Radius of pegs and balls //standard value = 50/rows  // same
     bins = []; // Array to store the number of balls in each bin
     timer = null;
+     
 
     for (var i = 0; i < cols; i++) {
         bins[i] = 0;
@@ -138,6 +165,8 @@ function resetValues() {
 
     statsWatcher = {};
     simplifiedStats = [];
+  
+
 }
 
 
@@ -146,30 +175,39 @@ for (var i = 0; i < cols; i++) {
     bins[i] = 0;
 }
 
+ 
+
 // Draw the pegs on the canvas
-function drawPegs() {
+function drawPegs(only_vertical_Lines = false) {
+    if (!only_vertical_Lines)
+    coordinates = [];
     // Loop through the rows and columns of pegs
     for (var i = 0; i < rows; i++) {
         for (var j = 0; j < cols; j++) {
-            var x = (canvas.width - gap) / 2 + gap * (j - i / 2);
+            var x = (canvas.width - gap) / 2 + gap * (j - i / 2); 
             var y = gap * (i + 1);
-            // Draw a circle with the peg color
 
+            // Draw a circle with the peg color
             ctx.fillStyle = "green";
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
-            if (i == rows - 1) {
+            if (i == rows - 1) { 
+                coordinates.push([x+gap/2 ,y]);
                 drawVerticalLine(x, y);
             }
         }
         cols += 1;
+        //console.log("j: ", j, " i:", i );
     }
+    //console.log("rows: ", rows, ", cols: ", cols);
+    if(!only_vertical_Lines)
     drawHorizontalLine(x, y);
+    //console.log(coordinates);
 }
 
 function drawHorizontalLine(x, y) {
-    ctx.lineWidth = 3;
+    ctx.lineWidth = horizontalLineWidth;
     ctx.beginPath();
     ctx.moveTo((canvas.width - gap) / 2 + gap * (-(rows - 1) / 2), y * 2.25);
     ctx.lineTo(x, y * 2.25);
@@ -177,34 +215,118 @@ function drawHorizontalLine(x, y) {
 }
 
 function drawVerticalLine(x, y) {
-    coordinates.push(x);
-    ctx.lineWidth = 2;
+
+    ctx.lineWidth = verticalLineWidth;
     ctx.beginPath();
-    ctx.moveTo(x, y + radius);
+    ctx.moveTo(x, y +radius);
     ctx.lineTo(x, y * 2.25);
     ctx.stroke();
+    
 }
 
-function drawball(x_position = canvas.width / 2, y_position = gap) {
-    ctx.fillStyle = "red";
+function drawball(x_position = canvas.width / 2, y_position = gap, size=0, col ="red") {
+    ctx.fillStyle = col;
     ctx.beginPath();
-    ctx.arc(x_position, y_position, radius, 0, Math.PI * 2);
+    ctx.arc(x_position, y_position, Math.abs(radius-size), 0, Math.PI*2 );
     ctx.fill();
+    
+}
+function clearBall(x_position, y_position ) {
+
+    ctx.clearRect(x_position-4 , y_position-4 , (radius-4)*3, (radius-4) *3);
 }
 
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function drawStats(x, y, n, p) {
-    ctx.lineWidth = gap - 2;
-    let startingPoint = y * 2.25 - 2;
+
+var prognosis_current_value = 0;
+
+function drawStatsPrognosis(x, y, n,stats = statsWatcher, value, col1 = "red", col2 = "magenta") {
+    ctx.lineWidth = gap *0.85;
+    let startingPoint = y * 2.25 - horizontalLineWidth/2; 
     var length = 1.1 * (y + radius) / n;
+    if (rows == 2) length *= 0.94;
+
+    //ctx.clearRect(x -ctx.lineWidth / 2 , startingPoint - stats[x][0] - 1, ctx.lineWidth + 0.5 , stats[x][0] + horizontalLineWidth/2 - horizontalLineWidth/6);
+    if (stats.hasOwnProperty(x)) {
+        //ctx.lineWidth+= 0.1;
+        ctx.beginPath();
+        ctx.strokeStyle = "#f5f7fa"; // Assuming the canvas background is white
+        ctx.moveTo(x, startingPoint);
+        ctx.lineTo(x, startingPoint - stats[x][0]-1);
+        ctx.stroke();
+    }
+    ctx.lineWidth-= 1.25;
 
     ctx.beginPath();
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-    gradient.addColorStop("0", "magenta");
-    gradient.addColorStop("1.0", "red");
+    gradient.addColorStop("0", col2);
+    gradient.addColorStop("1.0", col1);
+    ctx.strokeStyle = gradient;
+ 
+    if (!stats.hasOwnProperty(x)) {
+        stats[x] = [length, 1];
+        ctx.moveTo(x, startingPoint);
+        ctx.lineTo(x, startingPoint - length);
+    } else {
+        ctx.moveTo(x, startingPoint);
+        stats[x][0] = length * (value);
+        stats[x][1] = value;
+        
+        prognosis_current_value = value;
+
+        //reloadCanvas(x - gap / 2+1.5  , startingPoint *0.999 , gap *0.9, -(y + radius*rows));//,-stats[x][0]);// Speicherüberflussvermeidung
+        // remove current drawing
+        //ctx.clearRect(x - ctx.lineWidth / 2, startingPoint - stats[x][0], ctx.lineWidth, stats[x][0]);
+        
+
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineTo(x, startingPoint - stats[x][0]);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "black";
+    drawHorizontalLine((canvas.width + gap * rows) / 2 , gap * rows, 4); // ensure no differences between bins
+}
+
+function drawStatsCount2(x, y, stats = statsWatcher) {
+    y = y * 2.25 + gap / 2;
+    let fontSize = gap * 0.66;
+    ctx.font = "bold " + fontSize + "px Arial";
+    ctx.fillStyle = "red";
+    ctx.clearRect(x - gap / 2, y - gap / 3, gap, gap * 1.5);
+    if (stats[x][1] < 10)
+        ctx.fillText(stats[x][1], x - gap / 6, y + gap / 6);
+    else if (stats[x][1] < 100) ctx.fillText(stats[x][1], x - gap / 3, y + gap / 6);
+    else
+    {
+        ctx.font = "bold " + fontSize * 0.7 + "px Arial";
+        if (stats[x][1] < 1000)
+        {
+            ctx.fillText(stats[x][1], x - gap / 3, y + gap / 8);
+        }
+        else 
+        {
+            ctx.font = "bold " + fontSize * 0.65 + "px Arial";
+            ctx.fillText(stats[x][1], x - gap / 2, y + gap / 8);
+        }
+    }
+
+  
+}
+
+
+function drawStats(x, y, n, col1 = "red", col2 = "magenta") {
+    ctx.lineWidth = gap - 2;
+    let startingPoint = y * 2.25 - 2;
+    var length = 1.1 * (y + radius) / n;
+     
+    ctx.beginPath();
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop("0", col2);
+    gradient.addColorStop("1.0", col1);
     ctx.strokeStyle = gradient;
 
     if (!statsWatcher.hasOwnProperty(x)) {
@@ -223,38 +345,59 @@ function drawStats(x, y, n, p) {
 }
 
 function drawStatsCount(x, y) {
-    y = y * 2.25 + gap / 2;
-    let fontSize = gap * 0.66;
+    //y = y * 2.25 + gap / 1.75;
+    y = y * 2.25 + 1.5 + gap/2;
+    let fontSize = gap * 0.462; //0.66 * 0.7;
     ctx.font = "bold " + fontSize + "px Arial";
     ctx.fillStyle = "red";
     ctx.clearRect(x - gap / 2, y - gap / 2, gap, gap * 1.5);
     if (statsWatcher[x][1] < 10)
         ctx.fillText(statsWatcher[x][1], x - gap / 6, y + gap / 6);
-    else if (statsWatcher[x][1] < 100) ctx.fillText(statsWatcher[x][1], x - gap / 3, y + gap / 6);
-    else {
-        ctx.font = "bold " + fontSize * 0.7 + "px Arial";
-        ctx.fillText(statsWatcher[x][1], x - gap / 3, y + gap / 8);
+    else if (statsWatcher[x][1] < 100) ctx.fillText(statsWatcher[x][1], x - gap / 3.5, y + gap / 6);
+    else if (statsWatcher[x][1] < 1000){
+        //ctx.font = "bold " + fontSize * 0.7 + "px Arial";
+        ctx.fillText(statsWatcher[x][1], x - gap / 2.5, y + gap / 6);
     }
+    else{ctx.fillText(statsWatcher[x][1], x - gap / 2, y + gap / 6); }
 }
+
+
 
 
 // mainAnimationLoop is an asynchronous function that repeatedly calls the animate function
 // as long as the animation is active and not paused. This function is responsible for 
 // continuously updating the animation.
 async function mainAnimationLoop() {
+    leftBalls = balls;
     while (active && !pause) {
         await animate();
+        
         if (skip > 0) {
             skip--;
-            if (skip == 0 && superSpeed) {
-                skip = 7;
-                await wait(speed);
-            }
-        } else await wait(speed);
+        }   
+        if (skip <= 0 && speed==0) {
+
+            await wait(200);
+
+        }
+        if (skip <= 0 && speed!=100 && speed!=0) {
+
+            await wait((100-speed)/5);
+            skip = (speed/100) * (leftBalls/10);
+
+        }
     }
 }
 
+function lock_unlock_GUI(value) {
 
+    
+    rowRangeInput.disabled = value;
+    ballsAmountRangeInput.disabled = value;
+    probabilityRangeInput.disabled = value;
+   
+    // prognosisInput.disabled = value;
+}
 
 // createAnimation is a higher-order function that returns animateOneStep,
 // which uses closures to remember its state between calls so that we can pause the animation
@@ -268,24 +411,27 @@ function createAnimation(n, initial_n, probability) {
 
     return async function animateOneStep() {
         if (n < 0) {
+            //drawHorizontalLine((canvas.width + gap * rows) / 2 , gap * rows, 4); // Fixed black line mess in the result
             active = false;
             saveData();
-            submitButton.disabled = false;
-            rowRangeInput.disabled = false;
-            ballsAmountRangeInput.disabled = false;
-            probabilityRangeInput.disabled = false;
+            lock_unlock_GUI(false);
+            submitButton.disabled = false;                    
+            resetValues();
+             
             return;
         }
 
         if (i <= rows + 1) {
-            ctx.clearRect(0, 0, canvas.width, y + radius);
+            ctx.clearRect(0, 0, canvas.width, y + radius * 1.2);
             drawball(xPos, yPos);
             drawPegs();
             cols = 2;
 
             if (i == rows + 1) {
-                drawStats(xPos, y, initial_n, probability);
+
+                drawStats(xPos, y, initial_n);
                 drawStatsCount(xPos, y);
+                leftBalls -= 1; 
             }
 
             xPos = canvas.width / 2 - 0.5 * gap * j;
@@ -306,6 +452,7 @@ function createAnimation(n, initial_n, probability) {
             yPos = gap * i;
             arr = [];
             y = gap * rows;
+
         }
     }
 }
@@ -316,7 +463,36 @@ function saveData() {
     data.probabilityLeft = probabilityLeft / 100;
     data.probabilityRight = probabilityRight / 100;
     simplifiedStats = filterStats(statsWatcher);
+    simplifiedPrognosis = filterStats (prog_statsWathcer);
     data.stats = simplifiedStats;
+    data.prog_stats = simplifiedPrognosis;
+
+}
+
+function createProgInputs () {
+    const progRangeInputs = document.getElementById('prognosisButtons');
+    while (progRangeInputs.firstChild) {
+        progRangeInputs.removeChild(progRangeInputs.firstChild);
+    }
+    for (var i=0; i<rows; i++ ) {
+
+        const input = document.createElement('input');
+
+        input.id = 'prognosisInput';
+        input.type = 'range';
+        
+        input.max = balls;
+        input.min = '0';
+        input.value = '0';
+        input.step = '1';
+        input.autocomplete = 'off';
+
+
+        progRangeInputs.appendChild(input);
+
+        progInputsEventListener(input, i);
+        
+    }
 }
 
 
@@ -324,55 +500,74 @@ function saveData() {
 **********************************************************************************************************************************/
 
 
-var startButton = document.getElementById("start");
-var stopButton = document.getElementById("stop");
-var pauseButton = document.getElementById("pause");
-var submitButton = document.getElementById("sendData");
-var exportButton = document.getElementById("exportData");
-var exportButton2 = document.getElementById("exportData2");
-var rowRangeInput = document.getElementById("rangeInput"); // rows adjustment control
-var rowRangeValue = document.getElementById("rangeValue"); // current rows display
-var speedRangeInput = document.getElementById("rangeInput2"); // speed adjusment control
-var speedRangeValue = document.getElementById("rangeValue2"); // current speed display
-var ballsAmountRangeInput = document.getElementById("rangeInput3");
-var ballsAmountRangeValue = document.getElementById("rangeValue3");
-var probabilityRangeInput = document.getElementById("rangeInput4");
-var probabilityRangeValue = document.getElementById("rangeValue4");
+const startButton = document.getElementById("start");
+const stopButton = document.getElementById("stop");
+const pauseButton = document.getElementById("pause");
+const submitButton = document.getElementById("sendData");
+const GroupExportButton = document.getElementById("GroupExportData");
+const UserExportButton = document.getElementById("UserExportData");
+const continueWithoutProg = document.getElementById("continue-without-prog");
+const continueWithProg = document.getElementById("continue-with-prog");
+const newExperimentButton = document.getElementById("newExperiment");
+var rowRangeInput = document.getElementById("rowRangeInput"); // rows adjustment control
+var rowRangeDisplay = document.getElementById("rowRangeDisplay"); // current rows display
+var speedRangeInput = document.getElementById("speedRangeInput"); // speed adjusment control
+var speedRangeDisplay = document.getElementById("speedRangeDisplay"); // current speed display
+var ballsAmountRangeInput = document.getElementById("ballsAmountRangeInput");
+var ballsAmoutRangeDisplay = document.getElementById("ballsAmoutRangeDisplay");
+var probabilityRangeInput = document.getElementById("probabilityRangeInput");
+var probabilityRangeDisplay = document.getElementById("probabilityRangeDisplay");
 var statusSymbol = document.getElementById("statusSymbol");
+var prognosisInputDisplay = document.getElementById("prognosisInputDisplay");
+const probabilityInfoIcon = document.querySelector('.info-container');
+const probabilityInfoWindow = document.querySelector('.info-window');
+const continueInfoWindow = document.querySelector(".continue-info-window"); 
+
+
+
 
 ballsAmountRangeInput.addEventListener("input", () => {
-    newBallValue = Number(ballsAmountRangeInput.value);
-    ballsAmountRangeValue.textContent = "Anzahl Bälle = " + Number(newBallValue);
-    balls = newBallValue;
+
+    balls = Number(ballsAmountRangeInput.value);
+    ballsAmoutRangeDisplay.innerHTML = "Anzahl Bälle<br>" + Number(balls);
+
+      
+
+    lock_unlock_GUI(false);
+    reloadCanvas();
+    resetValues();
+    drawPegs();
+    resetProg();
+  
+    
+   
 });
 
 probabilityRangeInput.addEventListener("input", () => {
     probabilityLeft = Number(probabilityRangeInput.value);
     probabilityRight = 100 - probabilityLeft;
-    probabilityRangeValue.innerHTML = "Wahrscheinlichkeit " + probabilityLeft + " % | " + probabilityRight + " % ";
+    probabilityRangeDisplay.innerHTML = "Wahrscheinlichkeit<br> " + probabilityLeft + " % | " + probabilityRight + " % ";
 });
 
 speedRangeInput.addEventListener("input", () => {
-    speed = 1000 - (Number(speedRangeInput.value));
-    speedRangeValue.textContent = "Fallgeschwindigkeit = " + Math.ceil((speedRangeInput.value * 100) / 1000) + "%";
-
-    if (speedRangeInput.value == 1000) {
-        superSpeed = true;
-        skip = 7;
-    } else {
-        superSpeed = false;
-        skip = 0;
-    }
+    speed =  speedRangeInput.value;
+      
 });
 
 rowRangeInput.addEventListener("input", () => {
-    rowRangeValue.textContent = "Anzahl Reihen = " + rowRangeInput.value;
-    newRowValue = Number(rowRangeInput.value);
-    rows = newRowValue;
+    rowRangeDisplay.innerHTML = "Anzahl Reihen<br>" + rowRangeInput.value;
+    rows = Number(rowRangeInput.value);
+    
+    lock_unlock_GUI(false);
+   
     resizeGalton();
     reloadCanvas();
     resetValues();
+  
     drawPegs();
+    resetProg();
+    createProgInputs();
+    
 });
 
 startButton.addEventListener("click", () => {
@@ -381,24 +576,25 @@ startButton.addEventListener("click", () => {
         pause = false;
         mainAnimationLoop();
     } else if (!active) {
+
         // If the animation was not active, start it
         reloadCanvas();
         resetValues();
+  
         active = true;
         submitButton.disabled = true;
-        rowRangeInput.disabled = true;
-        ballsAmountRangeInput.disabled = true;
-        probabilityRangeInput.disabled = true;
+        lock_unlock_GUI(true);
 
         //intialisiere Statswatcher mit Nullen
         var binsArray = generateLastArray(rows);
         for (let s = 0; s < binsArray.length; s++) {
             statsWatcher[canvas.width / 2 - 0.5 * gap * binsArray[s]] = [null, 0];
         }
-        console.log(statsWatcher);
+        //console.log(statsWatcher);
 
         animate = createAnimation(balls - 1, balls - 1, probabilityLeft / 100);
         mainAnimationLoop();
+        
     }
 });
 
@@ -410,19 +606,19 @@ pauseButton.addEventListener("click", () => {
 
 stopButton.addEventListener("click", async () => {
     active = false;
-    rowRangeInput.disabled = false;
-    ballsAmountRangeInput.disabled = false;
-    probabilityRangeInput.disabled = false;
+
+    lock_unlock_GUI(false);
+   
     await wait(300);
-    statsWatcher = {};
     reloadCanvas();
     resetValues();
     drawPegs();
+    
 });
 
 submitButton.addEventListener("click", async () => {
     try {
-        const response = await fetch('/', {
+        const response = await fetch("/", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -434,7 +630,7 @@ submitButton.addEventListener("click", async () => {
 
         if (response.status === 201) {
             submitButton.disabled = true;
-            data = {user_id: user_id, group_id: group_name, rows: 0, balls: 0, probabilityLeft: 0, probabilityRight: 0, stats: []};
+            data = {user_id: user_id, group_id: group_name, rows: 0, balls: 0, probabilityLeft: 0, probabilityRight: 0, stats: [], prog_stats: []};
 
             statusSymbol.classList.remove("error-style");
             statusSymbol.innerHTML = "&#10003;"; // Checkmark symbol
@@ -461,7 +657,107 @@ submitButton.addEventListener("click", async () => {
 });
 
 
-exportButton.addEventListener("click", async () => {
+
+
+function progInputsEventListener(progInput, index) {
+    progInput.addEventListener("input", () => {
+        
+
+        var x = coordinates[index][0];
+        var y = coordinates[index][1];
+        var value = Number(progInput.value);
+
+        var currentValue = prog_statsWathcer[coordinates[index][0]][1];
+        progInput.max = remainedBalls +currentValue;
+        remainedBalls += currentValue;
+
+        drawStatsPrognosis(x, y, balls, prog_statsWathcer, value);
+        drawStatsCount2(x, y, prog_statsWathcer);
+    
+        remainedBalls = (remainedBalls-value);
+        prognosisInputDisplay.innerHTML =  remainedBalls;
+       
+
+        const progInputs = document.querySelectorAll("#prognosisInput");
+         
+        progInputs.forEach((input, index) => {
+            
+            var binValue = prog_statsWathcer[coordinates[index][0]][1];
+            input.max = remainedBalls + binValue;
+               
+        });      
+    });
+}
+  
+   
+
+
+if (window.matchMedia("(orientation: portrait)").matches) {
+    probabilityInfoIcon.addEventListener('click', function() {
+    
+        if (probabilityInfoWindow.style.visibility === 'visible') {
+            probabilityInfoWindow.style.visibility = 'hidden';
+            probabilityInfoWindow.style.opacity = '0';
+        } else {
+            probabilityInfoWindow.style.visibility = 'visible';
+            probabilityInfoWindow.style.opacity = '1';
+        }
+    });
+    
+    // Close the info window when clicking outside of it
+    document.addEventListener('click', function(event) {
+        if (!probabilityInfoIcon.contains(event.target)) {
+            probabilityInfoWindow.style.visibility = 'hidden';
+            probabilityInfoWindow.style.opacity = '0';
+        }
+    });
+ }
+
+
+
+continueWithProg.addEventListener("click", async () => {
+    
+    if(remainedBalls == 0) {
+
+
+        document.getElementById("settings-container").style.display = "none";
+        document.querySelector(".prognosis").style.display = "none";
+   
+        document.getElementById("button-container").style.display ="";
+        document.getElementById("speed-container").style.display="";
+        newExperimentButton.style.display="";
+
+    }
+    else {
+
+        continueInfoWindow.style.visibility = 'visible';
+        continueInfoWindow.style.opacity = '1';
+
+        await wait(2000);
+
+        continueInfoWindow.style.visibility = 'hidden';
+        continueInfoWindow.style.opacity = '0';
+         
+        
+    }
+});
+
+continueWithoutProg.addEventListener("click", function() {
+    // reset progwatcher 
+    document.getElementById("settings-container").style.display = "none";
+    document.querySelector(".prognosis").style.display = "none";
+   
+    document.getElementById("button-container").style.display ="";
+    document.getElementById("speed-container").style.display="";
+    newExperimentButton.style.display="";
+});
+
+newExperimentButton.addEventListener("click", function() {
+     
+    location.reload();
+});
+
+GroupExportButton.addEventListener("click", async () => {
     try {
          window.location.href = `/results?group_id=${group_name}&user_id=${user_id}`; 
        
@@ -472,7 +768,7 @@ exportButton.addEventListener("click", async () => {
 
 
 
-exportButton2.addEventListener("click", async () => {
+UserExportButton.addEventListener("click", async () => {
     try {     
 
         window.location.href = `/results?user_id=${user_id}`; 
@@ -482,11 +778,14 @@ exportButton2.addEventListener("click", async () => {
     }
 });
 
+
 //Resizing the window, forces redrawing canvas
 window.addEventListener('resize', function(event) { 
+    console.log("hey");
     resizeCanvas();
     resetValues();
     drawPegs();
+    resetProg();
 }, true);
 
 
@@ -494,6 +793,24 @@ window.addEventListener('resize', function(event) {
 ************************************************************************************************************************************/
 
 
+
+
+
+
+
+
+ 
 //Initialization
+
+resizeGalton();
+resizeCanvas();
 drawPegs();
+createProgInputs();
+
+// Initialize the pro_coordinates array with zeros
+for (var i = 0; i < coordinates.length-1; i++) {
+ prog_statsWathcer[coordinates[i][0]] = [0,0];
+ drawStatsCount2(coordinates[i][0], coordinates[i][1], prog_statsWathcer);
+}  
 submitButton.disabled = true;
+prognosisInputDisplay.innerHTML =  balls;
