@@ -96,7 +96,6 @@ var probabilityLeft = 50;
 var data = {user_id: user_id, group_id: group_name, rows: 0, balls: 0, probabilityLeft: 0, probabilityRight: 0, stats: [], prog_stats: []};
 
 
-
 /*                                                      Animation
 ********************************************************************************************************************************** */
 
@@ -124,7 +123,6 @@ function filterStats(stats) {
 }
 
 function reloadCanvas(x1 = 0, y1 = 0, x2 = canvas.width, y2 = canvas.height) {
-
     ctx.clearRect(x1, y1, x2, y2);
     if (x1 == y1 == 0 & x2 == canvas.width & y2 == canvas.height) {
         resetValues();
@@ -151,7 +149,6 @@ function resetProg() {
         });     
 }
 
-
 function resetValues() {
     pause = false; //stop execution
     active = false;  //animation is not active 
@@ -160,18 +157,14 @@ function resetValues() {
     radius = gap / 5; // Radius of pegs and balls //standard value = 50/rows  // same
     bins = []; // Array to store the number of balls in each bin
     timer = null;
-
+     
 
     for (var i = 0; i < cols; i++) {
         bins[i] = 0;
     }
 
-    
-
     statsWatcher = {};
-    simplifiedPrognosis = [];
     simplifiedStats = [];
-
   
 
 }
@@ -185,10 +178,8 @@ for (var i = 0; i < cols; i++) {
  
 
 // Draw the pegs on the canvas
-
 function drawPegs(only_vertical_Lines = false) {
     if (!only_vertical_Lines)
-
     coordinates = [];
     // Loop through the rows and columns of pegs
     for (var i = 0; i < rows; i++) {
@@ -210,17 +201,13 @@ function drawPegs(only_vertical_Lines = false) {
         //console.log("j: ", j, " i:", i );
     }
     //console.log("rows: ", rows, ", cols: ", cols);
-
     if(!only_vertical_Lines)
-
     drawHorizontalLine(x, y);
     //console.log(coordinates);
 }
 
-
 function drawHorizontalLine(x, y) {
     ctx.lineWidth = horizontalLineWidth;
-
     ctx.beginPath();
     ctx.moveTo((canvas.width - gap) / 2 + gap * (-(rows - 1) / 2), y * 2.25);
     ctx.lineTo(x, y * 2.25);
@@ -229,11 +216,9 @@ function drawHorizontalLine(x, y) {
 
 function drawVerticalLine(x, y) {
 
-
     ctx.lineWidth = verticalLineWidth;
     ctx.beginPath();
     ctx.moveTo(x, y +radius);
-
     ctx.lineTo(x, y * 2.25);
     ctx.stroke();
     
@@ -256,7 +241,6 @@ function wait(ms) {
 }
 
 
-
 var prognosis_current_value = 0;
 
 function drawStatsPrognosis(x, y, n,stats = statsWatcher, value, col1 = "red", col2 = "magenta") {
@@ -276,33 +260,24 @@ function drawStatsPrognosis(x, y, n,stats = statsWatcher, value, col1 = "red", c
     }
     ctx.lineWidth-= 1.25;
 
-
-function drawStats(x, y, n, col1 = "red", col2 = "magenta") {
-    ctx.lineWidth = gap - 2;
-    let startingPoint = y * 2.25 - 2;
-    var length = 1.1 * (y + radius) / n;
-     
     ctx.beginPath();
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
     gradient.addColorStop("0", col2);
     gradient.addColorStop("1.0", col1);
     ctx.strokeStyle = gradient;
-
  
     if (!stats.hasOwnProperty(x)) {
         stats[x] = [length, 1];
-
         ctx.moveTo(x, startingPoint);
         ctx.lineTo(x, startingPoint - length);
     } else {
         ctx.moveTo(x, startingPoint);
-
         stats[x][0] = length * (value);
         stats[x][1] = value;
         
         prognosis_current_value = value;
 
-        //reloadCanvas(x - gap / 2+1.5  , startingPoint *0.999 , gap *0.9, -(y + radius*rows));//,-stats[x][0]);// Speicherüberflussvermeidung
+        //reloadCanvas(x - gap / 2+1.5  , startingPoint *0.999 , gap *0.9, -(y + radius*rows));//,-stats[x][0]);// SpeicherÃ¼berflussvermeidung
         // remove current drawing
         //ctx.clearRect(x - ctx.lineWidth / 2, startingPoint - stats[x][0], ctx.lineWidth, stats[x][0]);
         
@@ -360,10 +335,9 @@ function drawStats(x, y, n, col1 = "red", col2 = "magenta") {
         ctx.lineTo(x, startingPoint - length);
     } else {
         ctx.moveTo(x, startingPoint);
-
         statsWatcher[x][0] += length;
         statsWatcher[x][1] += 1;
-        reloadCanvas(x - gap / 2 + 2, startingPoint - 2, gap - 3, -statsWatcher[x][0]);// Speicherüberflussvermeidung
+        reloadCanvas(x - gap / 2 + 2, startingPoint - 2, gap - 3, -statsWatcher[x][0]);// SpeicherÃ¼berflussvermeidung
         ctx.lineTo(x, startingPoint - statsWatcher[x][0]);
     }
     ctx.stroke();
@@ -371,10 +345,8 @@ function drawStats(x, y, n, col1 = "red", col2 = "magenta") {
 }
 
 function drawStatsCount(x, y) {
-
     //y = y * 2.25 + gap / 1.75;
     y = y * 2.25 + 1.5 + gap/2;
-
     let fontSize = gap * 0.462; //0.66 * 0.7;
     ctx.font = "bold " + fontSize + "px Arial";
     ctx.fillStyle = "red";
@@ -425,14 +397,13 @@ function lock_unlock_GUI(value) {
     probabilityRangeInput.disabled = value;
    
     // prognosisInput.disabled = value;
-
 }
 
 // createAnimation is a higher-order function that returns animateOneStep,
 // which uses closures to remember its state between calls so that we can pause the animation
 function createAnimation(n, initial_n, probability) {  
     var j = 0; // Platz zwischen pegs //standard Value: 0, also Mitte 
-    var i = 1; //j gerade falls i ungerade und umgekehrt //Höhenebene
+    var i = 1; //j gerade falls i ungerade und umgekehrt //HÃ¶henebene
     var xPos = canvas.width / 2 - 0.5 * gap * j;
     var yPos = gap * i;
     var arr = [];
@@ -440,7 +411,6 @@ function createAnimation(n, initial_n, probability) {
 
     return async function animateOneStep() {
         if (n < 0) {
-
             //drawHorizontalLine((canvas.width + gap * rows) / 2 , gap * rows, 4); // Fixed black line mess in the result
             active = false;
             saveData();
@@ -448,7 +418,6 @@ function createAnimation(n, initial_n, probability) {
             submitButton.disabled = false;                    
             resetValues();
              
-
             return;
         }
 
@@ -498,7 +467,6 @@ function saveData() {
     data.stats = simplifiedStats;
     data.prog_stats = simplifiedPrognosis;
 
-
 }
 
 function createProgInputs () {
@@ -525,13 +493,11 @@ function createProgInputs () {
         progInputsEventListener(input, i);
         
     }
-
 }
 
 
 /*                                                     Eventhandlers
 **********************************************************************************************************************************/
-
 
 
 const startButton = document.getElementById("start");
@@ -543,7 +509,6 @@ const UserExportButton = document.getElementById("UserExportData");
 const continueWithoutProg = document.getElementById("continue-without-prog");
 const continueWithProg = document.getElementById("continue-with-prog");
 const newExperimentButton = document.getElementById("newExperiment");
-
 var rowRangeInput = document.getElementById("rowRangeInput"); // rows adjustment control
 var rowRangeDisplay = document.getElementById("rowRangeDisplay"); // current rows display
 var speedRangeInput = document.getElementById("speedRangeInput"); // speed adjusment control
@@ -553,7 +518,6 @@ var ballsAmoutRangeDisplay = document.getElementById("ballsAmoutRangeDisplay");
 var probabilityRangeInput = document.getElementById("probabilityRangeInput");
 var probabilityRangeDisplay = document.getElementById("probabilityRangeDisplay");
 var statusSymbol = document.getElementById("statusSymbol");
-
 var prognosisInputDisplay = document.getElementById("prognosisInputDisplay");
 const probabilityInfoIcon = document.querySelector('.info-container');
 const probabilityInfoWindow = document.querySelector('.info-window');
@@ -562,42 +526,36 @@ const continueInfoWindow = document.querySelector(".continue-info-window");
 
 
 
-
 ballsAmountRangeInput.addEventListener("input", () => {
 
-
     balls = Number(ballsAmountRangeInput.value);
-    ballsAmoutRangeDisplay.innerHTML = "Anzahl Bälle<br>" + Number(balls);
+    ballsAmoutRangeDisplay.innerHTML = "Anzahl BÃ¤lle<br>" + Number(balls);
 
       
-
 
     lock_unlock_GUI(false);
     reloadCanvas();
     resetValues();
     drawPegs();
     resetProg();
-
+  
+    
    
 });
 
 probabilityRangeInput.addEventListener("input", () => {
     probabilityLeft = Number(probabilityRangeInput.value);
     probabilityRight = 100 - probabilityLeft;
-
     probabilityRangeDisplay.innerHTML = "Wahrscheinlichkeit<br> " + probabilityLeft + " % | " + probabilityRight + " % ";
-
 });
 
 speedRangeInput.addEventListener("input", () => {
     speed =  speedRangeInput.value;
-
       
 });
 
 rowRangeInput.addEventListener("input", () => {
     rowRangeDisplay.innerHTML = "Anzahl Reihen<br>" + rowRangeInput.value;
-
     rows = Number(rowRangeInput.value);
     
     lock_unlock_GUI(false);
@@ -605,13 +563,11 @@ rowRangeInput.addEventListener("input", () => {
     resizeGalton();
     reloadCanvas();
     resetValues();
-
   
     drawPegs();
     resetProg();
     createProgInputs();
     
-
 });
 
 startButton.addEventListener("click", () => {
@@ -653,14 +609,12 @@ stopButton.addEventListener("click", async () => {
 
     lock_unlock_GUI(false);
    
-
     await wait(300);
     reloadCanvas();
     resetValues();
     drawPegs();
     
 });
-
 
 submitButton.addEventListener("click", async () => {
     try {
@@ -701,7 +655,6 @@ submitButton.addEventListener("click", async () => {
         console.error(error.message);
     }
 });
-
 
 
 
@@ -797,7 +750,6 @@ continueWithoutProg.addEventListener("click", function() {
     document.getElementById("button-container").style.display ="";
     document.getElementById("speed-container").style.display="";
     newExperimentButton.style.display="";
-
 });
 
 newExperimentButton.addEventListener("click", function() {
@@ -837,64 +789,8 @@ window.addEventListener('resize', function(event) {
 }, true);
 
 
-previous.addEventListener("click", () => {
-    if (current_bin == 0) {
-               
-        drawball(coordinates[current_bin][0] ,coordinates[current_bin][1],2);
-    }
-    if (current_bin > 0) {
-         
-        drawball(coordinates[current_bin][0]  ,coordinates[current_bin][1],0, "white");
-        current_bin -= 1;
-        drawball(coordinates[current_bin][0] ,coordinates[current_bin][1],2 );
-    } 
-
-    currentValue = prog_statsWathcer[coordinates[current_bin][0]][1];
-
-    if (remainedBalls!=0) {
-        prognosisInput.max = remainedBalls ;
-    }
-    else {
-        prognosisInput.max = currentValue;
-    }
-    prognosisInput.value = currentValue;
-
-});
-
-GroupExportButton.addEventListener("click", async () => {
-    try {
-         window.location.href = `/results?group_id=${group_name}&user_id=${user_id}`; 
-       
-    } catch (error) {
-        console.error(error.message);
-    }
-});
-
-
-
-UserExportButton.addEventListener("click", async () => {
-    try {     
-
-        window.location.href = `/results?user_id=${user_id}`; 
-
-    } catch (error) {
-        console.error(error.message);
-    }
-});
-
-//Resizing the window, forces redrawing canvas
-window.addEventListener('resize', function(event) { 
-    console.log("hey");
-    resizeCanvas();
-    resetValues();
-    drawPegs();
-    resetProg();
-}, true);
-
-
  /*                                                       Main
 ************************************************************************************************************************************/
-
 
 
 
@@ -918,4 +814,3 @@ for (var i = 0; i < coordinates.length-1; i++) {
 }  
 submitButton.disabled = true;
 prognosisInputDisplay.innerHTML =  balls;
-
