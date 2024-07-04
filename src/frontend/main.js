@@ -253,7 +253,8 @@ function drawStatsPrognosis(x, y, n,stats = statsWatcher, value, col1 = "red", c
     if (stats.hasOwnProperty(x)) {
         //ctx.lineWidth+= 0.1;
         ctx.beginPath();
-        ctx.strokeStyle = "#f5f7fa"; // Assuming the canvas background is white
+        // ctx.strokeStyle = "#f5f7fa"; // Assuming the canvas background is white
+        ctx.strokeStyle = "#ffffff"; // Assuming the canvas background is white
         ctx.moveTo(x, startingPoint);
         ctx.lineTo(x, startingPoint - stats[x][0]-1);
         ctx.stroke();
@@ -277,7 +278,7 @@ function drawStatsPrognosis(x, y, n,stats = statsWatcher, value, col1 = "red", c
         
         prognosis_current_value = value;
 
-        //reloadCanvas(x - gap / 2+1.5  , startingPoint *0.999 , gap *0.9, -(y + radius*rows));//,-stats[x][0]);// SpeicherÃ¼berflussvermeidung
+        //reloadCanvas(x - gap / 2+1.5  , startingPoint *0.999 , gap *0.9, -(y + radius*rows));//,-stats[x][0]);// Speicherüberflussvermeidung
         // remove current drawing
         //ctx.clearRect(x - ctx.lineWidth / 2, startingPoint - stats[x][0], ctx.lineWidth, stats[x][0]);
         
@@ -337,7 +338,7 @@ function drawStats(x, y, n, col1 = "red", col2 = "magenta") {
         ctx.moveTo(x, startingPoint);
         statsWatcher[x][0] += length;
         statsWatcher[x][1] += 1;
-        reloadCanvas(x - gap / 2 + 2, startingPoint - 2, gap - 3, -statsWatcher[x][0]);// SpeicherÃ¼berflussvermeidung
+        reloadCanvas(x - gap / 2 + 2, startingPoint - 2, gap - 3, -statsWatcher[x][0]);// Speicherüberflussvermeidung
         ctx.lineTo(x, startingPoint - statsWatcher[x][0]);
     }
     ctx.stroke();
@@ -403,7 +404,7 @@ function lock_unlock_GUI(value) {
 // which uses closures to remember its state between calls so that we can pause the animation
 function createAnimation(n, initial_n, probability) {  
     var j = 0; // Platz zwischen pegs //standard Value: 0, also Mitte 
-    var i = 1; //j gerade falls i ungerade und umgekehrt //HÃ¶henebene
+    var i = 1; //j gerade falls i ungerade und umgekehrt //Höhenebene
     var xPos = canvas.width / 2 - 0.5 * gap * j;
     var yPos = gap * i;
     var arr = [];
@@ -529,7 +530,7 @@ const continueInfoWindow = document.querySelector(".continue-info-window");
 ballsAmountRangeInput.addEventListener("input", () => {
 
     balls = Number(ballsAmountRangeInput.value);
-    ballsAmoutRangeDisplay.innerHTML = "Anzahl BÃ¤lle<br>" + Number(balls);
+    ballsAmoutRangeDisplay.innerHTML = "Anzahl Bälle<br>" + Number(balls);
 
       
 

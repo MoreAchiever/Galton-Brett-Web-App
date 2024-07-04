@@ -31,16 +31,13 @@ def plot_galton_board(rows, balls, probability_left, probability_right, actual_s
 
     additional_info = f" {int(probability_left*100)} %  |  {int(probability_right*100)} % " \
                       f"\nBälle gesamt = {balls} \nAbweichung  =  {round(deviation_sum)}\nin %  =  {round(deviation_percentage,4)}"
-
     
     
     fig, ax = plt.subplots(figsize=(7, 5))
 
 
     #Plot the actual results
-
     ax.bar(x_labels, actual_stats, width=0.2, edgecolor='black', label='Ergebnis', align='center')
-
     
     # Overlay the prognose results
     ax.bar(x_labels, prog_stats, width=0.2, edgecolor='black', color='orange', alpha=0.5, label='Prognose',
@@ -48,13 +45,11 @@ def plot_galton_board(rows, balls, probability_left, probability_right, actual_s
 
     # Plot the theoretical distribution as a line plot
     ax.plot(x_labels, theoretical_stats, color='red', marker='o', linestyle='-', linewidth=2, markersize=5,
-
             label='Theoretische Verteilung')
 
     ax.set_xticks(x_labels)  # Set x-axis labels to show both even and odd number
     ax.set_xlabel('Behälter')
     ax.set_ylabel('Anzahl Bälle')
-
     ax.set_title('Galton Board Simulation')
 
      # Add a legend
